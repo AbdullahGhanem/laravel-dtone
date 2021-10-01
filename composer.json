@@ -1,0 +1,38 @@
+{
+    "name": "ghanem/dtone",
+    "description": "A package that provides an interface between Laravel and dtone API",
+    "keywords": ["Laravel", "PHP", "dtone", "API", "DT One"],
+    "type": "laravel-package",
+    "license": "MIT",
+    "autoload": {
+        "psr-4": {
+            "Ghanem\\Dtone\\": "src/"
+        }
+    },
+    "authors": [
+        {
+            "name": "Abdullah Ghanem",
+            "email": "3bdullah.ghanem@gmail.com"
+        }
+    ],
+    "require": {
+        "guzzlehttp/guzzle": "^7.3",
+        "illuminate/http": "^8.55"
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Ghanem\\Dtone\\DtoneServiceProvider"
+            ],
+            "aliases": {
+                "Dtone": "Ghanem\\Dtone\\Facades\\Dtone"
+            }
+        }
+    }, 
+    "minimum-stability": "dev",
+    "prefer-stable": true,
+    "scripts": {
+        "test": "vendor/bin/phpunit",
+        "test-f": "vendor/bin/phpunit --filter"
+    }
+}
