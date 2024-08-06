@@ -105,15 +105,22 @@ class Request
     }
 
 
-    static public function createTransaction($external_id, $product_id, $credit_party_identifier)
+    static public function createTransaction($external_id, $product_id, $credit_party_identifier, $auto_confirm = false)
     {
         $params = [];
+        $params['auto_confirm'] = $auto_confirm;
         isset($external_id) ? $params['external_id'] = $external_id : null;
         isset($product_id) ? $params['product_id'] = $product_id : null;
         isset($credit_party_identifier) ? $params['credit_party_identifier'] = $credit_party_identifier : null;
         return Request::request('post', 'async/transactions', $params);
     }
 
+
+
+    static public function confirmTransaction($transaction_id)
+    {
+        return Request::request('post', $transaction_id.'/confirm');
+    }
 
     static public function productById($id)
     {
