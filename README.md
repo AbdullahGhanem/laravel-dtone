@@ -248,9 +248,32 @@ The `meta` array contains:
 
 ## Roadmap
 
-- [ ] Response DTOs (typed objects instead of arrays)
-- [ ] Webhook / Callback support
-- [ ] Laravel notifications channel integration
+### v2.1 - Response DTOs
+- [ ] Typed DTO classes for all API responses (Service, Country, Operator, Product, Transaction, etc.)
+- [ ] Auto-hydration from API responses into DTO objects
+- [ ] Collection support for list endpoints (e.g. `ServiceCollection`, `ProductCollection`)
+- [ ] Casting support for nested objects (e.g. `Transaction->product`, `Operator->country`)
+
+### v2.2 - Webhook / Callback Support
+- [ ] Webhook controller to receive DT One transaction status callbacks
+- [ ] Signature verification for incoming webhooks
+- [ ] Configurable webhook route and middleware
+- [ ] Event dispatching for transaction status changes (`TransactionCompleted`, `TransactionFailed`, etc.)
+- [ ] Webhook logging for debugging
+
+### v2.3 - Laravel Notifications Channel
+- [ ] `DtoneChannel` for sending top-ups via Laravel notifications
+- [ ] `DtoneMessage` class for building notification payloads
+- [ ] Support for on-demand notifications (notify without a user model)
+- [ ] Queueable notification support
+
+### v3.0 - Advanced Features
+- [ ] Caching layer for discovery endpoints (services, countries, operators, products)
+- [ ] Configurable cache TTL per endpoint
+- [ ] Rate limiting awareness (respect `X-RateLimit` headers, auto-throttle)
+- [ ] Batch transactions support
+- [ ] Artisan commands (`dtone:balance`, `dtone:products`, `dtone:transaction`)
+- [ ] Health check endpoint integration
 
 ## Testing
 
