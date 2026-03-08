@@ -64,11 +64,16 @@ use Ghanem\Dtone\Facades\Dtone;
 ### Services
 
 ```php
-// List all services (with pagination)
+// List all services (returns PaginatedResponse of Service DTOs)
 $services = Dtone::services($page, $per_page);
+
+$services->getData();           // array of Service DTOs
+$services->getMeta()->getTotal(); // total count
 
 // Get a service by ID
 $service = Dtone::serviceById(1);
+$service->getId();
+$service->getName();
 ```
 
 ### Countries
@@ -79,6 +84,9 @@ $countries = Dtone::countries($page, $per_page);
 
 // Get a country by ISO code
 $country = Dtone::countryByIsoCode('US');
+$country->getIsoCode();    // 'US'
+$country->getName();       // 'United States'
+$country->getRegions();    // array
 ```
 
 ### Operators
@@ -89,9 +97,13 @@ $operators = Dtone::operators('US', $page, $per_page);
 
 // Get an operator by ID
 $operator = Dtone::operatorById(5);
+$operator->getId();
+$operator->getName();
+$operator->getCountry();            // Country DTO
+$operator->getCountry()->getName(); // nested access
 
 // Lookup operators by mobile number
-$operators = Dtone::lookupOperatorsByMobileNumber('+1234567890');
+$result = Dtone::lookupOperatorsByMobileNumber('+1234567890');
 ```
 
 ### Products
@@ -109,6 +121,11 @@ $products = Dtone::products(
 
 // Get a product by ID
 $product = Dtone::productById(99);
+$product->getId();
+$product->getType();
+$product->getService();              // Service DTO
+$product->getOperator();             // Operator DTO
+$product->getAttribute('prices');    // raw array for nested fields
 ```
 
 ### Campaigns
@@ -119,6 +136,8 @@ $campaigns = Dtone::campaigns($page, $per_page);
 
 // Get a campaign by ID
 $campaign = Dtone::campaignById(7);
+$campaign->getId();
+$campaign->getName();
 ```
 
 ### Promotions
@@ -129,6 +148,7 @@ $promotions = Dtone::promotions($page, $per_page);
 
 // Get a promotion by ID
 $promotion = Dtone::promotionById(3);
+$promotion->getOperator(); // Operator DTO or null
 ```
 
 ### Benefit Types
@@ -141,7 +161,12 @@ $benefitTypes = Dtone::benefitTypes($page, $per_page);
 ### Balances
 
 ```php
-$balances = Dtone::balances();
+$balances = Dtone::balances(); // array of Balance DTOs
+
+foreach ($balances as $balance) {
+    $balance->getAmount();    // 150.50
+    $balance->getCurrency();  // 'USD'
+}
 ```
 
 ### Transactions
@@ -152,6 +177,10 @@ $transactions = Dtone::transactions($page, $per_page);
 
 // Get a transaction by ID
 $transaction = Dtone::transactionById(456);
+$transaction->getId();
+$transaction->getStatus();
+$transaction->getExternalId();
+$transaction->getAttribute('product');  // raw array
 
 // Create a transaction (async)
 $transaction = Dtone::createTransaction(
@@ -204,27 +233,149 @@ $status = Dtone::creditPartyStatus(
 );
 ```
 
+### Response DTOs
+
+All API responses are returned as typed DTO objects. Every DTO has a `toArray()` method for backward compatibility:
+
+```php
+$service = Dtone::serviceById(1);
+$service->toArray();  // ['id' => 1, 'name' => 'Mobile']
+
+$response = Dtone::services();
+$response->toArray(); // ['data' => [...], 'meta' => [...]]
+```
+
+Available DTOs: `Service`, `Country`, `Operator`, `Product`, `Balance`, `Transaction`, `Campaign`, `Promotion`, `BenefitType`, `PaginatedResponse`, `Meta`.
+
 ### Paginated Responses
 
-List endpoints return a paginated response with `data` and `meta`:
+List endpoints return a `PaginatedResponse` DTO:
 
 ```php
 $response = Dtone::services(1, 10);
 
-$response['data'];  // array of items
-$response['meta'];  // pagination info
+$response->getData();                  // array of DTOs
+$response->getMeta()->getTotal();      // total items
+$response->getMeta()->getTotalPages(); // total pages
+$response->getMeta()->getPage();       // current page
+$response->getMeta()->getPerPage();    // items per page
+$response->getMeta()->getNextPage();   // next page number
+$response->getMeta()->getPrevPage();   // previous page number
 ```
 
-The `meta` array contains:
+## Webhooks
 
-| Key | Description |
-|-----|-------------|
-| `total` | Total number of items |
-| `total_pages` | Total number of pages |
-| `per_page` | Items per page |
-| `page` | Current page |
-| `next_page` | Next page number |
-| `prev_page` | Previous page number |
+The package automatically registers a webhook endpoint to receive DT One transaction callbacks.
+
+### Configuration
+
+```env
+DTONE_WEBHOOK_PATH=dtone/webhook
+DTONE_WEBHOOK_SECRET=your-webhook-secret
+DTONE_WEBHOOK_LOGGING=false
+```
+
+You can also configure middleware in `config/dtone.php`:
+
+```php
+'webhook_middleware' => ['api'],
+```
+
+Set `webhook_path` to `null` to disable the webhook route.
+
+### Events
+
+The webhook controller dispatches the following events:
+
+| Event | Dispatched when |
+|-------|----------------|
+| `TransactionStatusChanged` | Every webhook (always dispatched) |
+| `TransactionCompleted` | Status is `COMPLETED` |
+| `TransactionFailed` | Status is `FAILED` or `DECLINED` |
+| `TransactionConfirmed` | Status is `CONFIRMED` |
+| `TransactionCancelled` | Status is `CANCELLED` |
+
+Listen to events in your `EventServiceProvider`:
+
+```php
+use Ghanem\Dtone\Events\TransactionCompleted;
+
+protected $listen = [
+    TransactionCompleted::class => [
+        YourTransactionCompletedListener::class,
+    ],
+];
+```
+
+Each event has `$payload`, `$status`, and `$transactionId` properties:
+
+```php
+public function handle(TransactionCompleted $event)
+{
+    $event->transactionId; // 123
+    $event->status;        // 'COMPLETED'
+    $event->payload;       // full webhook payload array
+}
+```
+
+### Signature Verification
+
+If `DTONE_WEBHOOK_SECRET` is set, the `VerifyWebhookSignature` middleware is available:
+
+```php
+// config/dtone.php
+'webhook_middleware' => [
+    \Ghanem\Dtone\Http\Middleware\VerifyWebhookSignature::class,
+],
+```
+
+This verifies the `X-Dtone-Signature` header using HMAC-SHA256.
+
+## Laravel Notifications Channel
+
+Send top-ups as Laravel notifications using the `DtoneChannel`:
+
+```php
+use Ghanem\Dtone\Notifications\DtoneChannel;
+use Ghanem\Dtone\Notifications\DtoneMessage;
+use Illuminate\Notifications\Notification;
+
+class SendAirtimeNotification extends Notification
+{
+    public function via($notifiable)
+    {
+        return [DtoneChannel::class];
+    }
+
+    public function toDtone($notifiable)
+    {
+        return DtoneMessage::create(99)          // product_id
+            ->externalId('order-123')             // optional external ID
+            ->toMobileNumber('+1234567890')       // recipient
+            ->autoConfirm();                      // auto-confirm the transaction
+    }
+}
+```
+
+### DtoneMessage API
+
+```php
+DtoneMessage::create($productId)         // create with product ID
+    ->externalId('ext-123')               // set external ID (auto-generated if not set)
+    ->toMobileNumber('+1234567890')       // set mobile number recipient
+    ->to(['account_number' => '123456'])  // or set custom identifier
+    ->autoConfirm()                       // enable auto-confirm
+    ->sync();                             // use synchronous API (default: async)
+```
+
+### On-Demand Notifications
+
+```php
+use Illuminate\Support\Facades\Notification;
+
+Notification::route(DtoneChannel::class, null)
+    ->notify(new SendAirtimeNotification());
+```
 
 ## Done
 
@@ -243,31 +394,15 @@ The `meta` array contains:
 - [x] Pagination support with meta data
 - [x] Production / Sandbox environment switching
 - [x] Retry mechanism for failed requests
-- [x] Test suite
+- [x] Response DTOs (typed objects with toArray() compatibility)
+- [x] Webhook / Callback support with event dispatching
+- [x] Signature verification middleware
+- [x] Laravel notifications channel integration
+- [x] Test suite (93 tests, 210 assertions)
 - [x] Support for Laravel 7 - 12
 
 ## Roadmap
 
-### v2.1 - Response DTOs
-- [ ] Typed DTO classes for all API responses (Service, Country, Operator, Product, Transaction, etc.)
-- [ ] Auto-hydration from API responses into DTO objects
-- [ ] Collection support for list endpoints (e.g. `ServiceCollection`, `ProductCollection`)
-- [ ] Casting support for nested objects (e.g. `Transaction->product`, `Operator->country`)
-
-### v2.2 - Webhook / Callback Support
-- [ ] Webhook controller to receive DT One transaction status callbacks
-- [ ] Signature verification for incoming webhooks
-- [ ] Configurable webhook route and middleware
-- [ ] Event dispatching for transaction status changes (`TransactionCompleted`, `TransactionFailed`, etc.)
-- [ ] Webhook logging for debugging
-
-### v2.3 - Laravel Notifications Channel
-- [ ] `DtoneChannel` for sending top-ups via Laravel notifications
-- [ ] `DtoneMessage` class for building notification payloads
-- [ ] Support for on-demand notifications (notify without a user model)
-- [ ] Queueable notification support
-
-### v3.0 - Advanced Features
 - [ ] Caching layer for discovery endpoints (services, countries, operators, products)
 - [ ] Configurable cache TTL per endpoint
 - [ ] Rate limiting awareness (respect `X-RateLimit` headers, auto-throttle)

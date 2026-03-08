@@ -38,4 +38,18 @@ return [
     */
     'retries' => env('DTONE_RETRIES', 0),
     'retry_delay' => env('DTONE_RETRY_DELAY', 100),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Webhook Configuration
+    |--------------------------------------------------------------------------
+    |
+    | Configure the webhook endpoint for DT One transaction callbacks.
+    | Set webhook_path to null to disable the webhook route.
+    |
+    */
+    'webhook_path' => env('DTONE_WEBHOOK_PATH', 'dtone/webhook'),
+    'webhook_secret' => env('DTONE_WEBHOOK_SECRET', ''),
+    'webhook_middleware' => [],
+    'webhook_logging' => env('DTONE_WEBHOOK_LOGGING', false),
 ];

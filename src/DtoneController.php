@@ -2,63 +2,98 @@
 
 namespace Ghanem\Dtone;
 
+use Ghanem\Dtone\Dto\Balance;
+use Ghanem\Dtone\Dto\BenefitType;
+use Ghanem\Dtone\Dto\Campaign;
+use Ghanem\Dtone\Dto\Country;
+use Ghanem\Dtone\Dto\Operator;
+use Ghanem\Dtone\Dto\PaginatedResponse;
+use Ghanem\Dtone\Dto\Product;
+use Ghanem\Dtone\Dto\Promotion;
+use Ghanem\Dtone\Dto\Service;
+use Ghanem\Dtone\Dto\Transaction;
+
 class DtoneController
 {
     // -------------------------------------------------------------------------
     // Services
     // -------------------------------------------------------------------------
 
-    public function services(?int $page = null, ?int $per_page = null): array
+    /**
+     * @return PaginatedResponse
+     */
+    public function services(?int $page = null, ?int $per_page = null)
     {
-        return Request::services($page, $per_page);
+        return PaginatedResponse::fromArray(Request::services($page, $per_page), Service::class);
     }
 
-    public function serviceById(int $id): array
+    /**
+     * @return Service
+     */
+    public function serviceById(int $id)
     {
-        return Request::serviceById($id);
+        return Service::fromArray(Request::serviceById($id));
     }
 
     // -------------------------------------------------------------------------
     // Countries
     // -------------------------------------------------------------------------
 
-    public function countries(?int $page = null, ?int $per_page = null): array
+    /**
+     * @return PaginatedResponse
+     */
+    public function countries(?int $page = null, ?int $per_page = null)
     {
-        return Request::countries($page, $per_page);
+        return PaginatedResponse::fromArray(Request::countries($page, $per_page), Country::class);
     }
 
-    public function countryByIsoCode(string $iso_code): array
+    /**
+     * @return Country
+     */
+    public function countryByIsoCode(string $iso_code)
     {
-        return Request::countryByIsoCode($iso_code);
+        return Country::fromArray(Request::countryByIsoCode($iso_code));
     }
 
     // -------------------------------------------------------------------------
     // Operators
     // -------------------------------------------------------------------------
 
-    public function operators(?string $country_iso_code = null, ?int $page = null, ?int $per_page = null): array
+    /**
+     * @return PaginatedResponse
+     */
+    public function operators(?string $country_iso_code = null, ?int $page = null, ?int $per_page = null)
     {
-        return Request::operators($country_iso_code, $page, $per_page);
+        return PaginatedResponse::fromArray(Request::operators($country_iso_code, $page, $per_page), Operator::class);
     }
 
-    public function operatorById(int $id): array
+    /**
+     * @return Operator
+     */
+    public function operatorById(int $id)
     {
-        return Request::operatorById($id);
+        return Operator::fromArray(Request::operatorById($id));
     }
 
     // -------------------------------------------------------------------------
     // Balances
     // -------------------------------------------------------------------------
 
-    public function balances(): array
+    /**
+     * @return Balance[]
+     */
+    public function balances()
     {
-        return Request::balances();
+        return array_map([Balance::class, 'fromArray'], Request::balances());
     }
 
     // -------------------------------------------------------------------------
     // Products
     // -------------------------------------------------------------------------
 
+    /**
+     * @return PaginatedResponse
+     */
     public function products(
         ?string $type = null,
         ?int $service_id = null,
@@ -66,111 +101,165 @@ class DtoneController
         array $benefit_types = [],
         ?int $page = null,
         ?int $per_page = null
-    ): array {
-        return Request::products($type, $service_id, $country_iso_code, $benefit_types, $page, $per_page);
+    ) {
+        return PaginatedResponse::fromArray(
+            Request::products($type, $service_id, $country_iso_code, $benefit_types, $page, $per_page),
+            Product::class
+        );
     }
 
-    public function productById(int $id): array
+    /**
+     * @return Product
+     */
+    public function productById(int $id)
     {
-        return Request::productById($id);
+        return Product::fromArray(Request::productById($id));
     }
 
     // -------------------------------------------------------------------------
     // Campaigns
     // -------------------------------------------------------------------------
 
-    public function campaigns(?int $page = null, ?int $per_page = null): array
+    /**
+     * @return PaginatedResponse
+     */
+    public function campaigns(?int $page = null, ?int $per_page = null)
     {
-        return Request::campaigns($page, $per_page);
+        return PaginatedResponse::fromArray(Request::campaigns($page, $per_page), Campaign::class);
     }
 
-    public function campaignById(int $id): array
+    /**
+     * @return Campaign
+     */
+    public function campaignById(int $id)
     {
-        return Request::campaignById($id);
+        return Campaign::fromArray(Request::campaignById($id));
     }
 
     // -------------------------------------------------------------------------
     // Promotions
     // -------------------------------------------------------------------------
 
-    public function promotions(?int $page = null, ?int $per_page = null): array
+    /**
+     * @return PaginatedResponse
+     */
+    public function promotions(?int $page = null, ?int $per_page = null)
     {
-        return Request::promotions($page, $per_page);
+        return PaginatedResponse::fromArray(Request::promotions($page, $per_page), Promotion::class);
     }
 
-    public function promotionById(int $id): array
+    /**
+     * @return Promotion
+     */
+    public function promotionById(int $id)
     {
-        return Request::promotionById($id);
+        return Promotion::fromArray(Request::promotionById($id));
     }
 
     // -------------------------------------------------------------------------
     // Benefit Types
     // -------------------------------------------------------------------------
 
-    public function benefitTypes(?int $page = null, ?int $per_page = null): array
+    /**
+     * @return PaginatedResponse
+     */
+    public function benefitTypes(?int $page = null, ?int $per_page = null)
     {
-        return Request::benefitTypes($page, $per_page);
+        return PaginatedResponse::fromArray(Request::benefitTypes($page, $per_page), BenefitType::class);
     }
 
     // -------------------------------------------------------------------------
     // Transactions
     // -------------------------------------------------------------------------
 
-    public function transactions(?int $page = null, ?int $per_page = null): array
+    /**
+     * @return PaginatedResponse
+     */
+    public function transactions(?int $page = null, ?int $per_page = null)
     {
-        return Request::transactions($page, $per_page);
+        return PaginatedResponse::fromArray(Request::transactions($page, $per_page), Transaction::class);
     }
 
-    public function transactionById(int $id): array
+    /**
+     * @return Transaction
+     */
+    public function transactionById(int $id)
     {
-        return Request::transactionById($id);
+        return Transaction::fromArray(Request::transactionById($id));
     }
 
-    public function createTransaction(string $external_id, int $product_id, array $credit_party_identifier, bool $auto_confirm = false): array
+    /**
+     * @return Transaction
+     */
+    public function createTransaction(string $external_id, int $product_id, array $credit_party_identifier, bool $auto_confirm = false)
     {
-        return Request::createTransaction($external_id, $product_id, $credit_party_identifier, $auto_confirm);
+        return Transaction::fromArray(Request::createTransaction($external_id, $product_id, $credit_party_identifier, $auto_confirm));
     }
 
-    public function createTransactionSync(string $external_id, int $product_id, array $credit_party_identifier, bool $auto_confirm = false): array
+    /**
+     * @return Transaction
+     */
+    public function createTransactionSync(string $external_id, int $product_id, array $credit_party_identifier, bool $auto_confirm = false)
     {
-        return Request::createTransactionSync($external_id, $product_id, $credit_party_identifier, $auto_confirm);
+        return Transaction::fromArray(Request::createTransactionSync($external_id, $product_id, $credit_party_identifier, $auto_confirm));
     }
 
-    public function confirmTransaction(int $transaction_id): array
+    /**
+     * @return Transaction
+     */
+    public function confirmTransaction(int $transaction_id)
     {
-        return Request::confirmTransaction($transaction_id);
+        return Transaction::fromArray(Request::confirmTransaction($transaction_id));
     }
 
-    public function confirmTransactionSync(int $transaction_id): array
+    /**
+     * @return Transaction
+     */
+    public function confirmTransactionSync(int $transaction_id)
     {
-        return Request::confirmTransactionSync($transaction_id);
+        return Transaction::fromArray(Request::confirmTransactionSync($transaction_id));
     }
 
-    public function cancelTransaction(int $transaction_id): array
+    /**
+     * @return Transaction
+     */
+    public function cancelTransaction(int $transaction_id)
     {
-        return Request::cancelTransaction($transaction_id);
+        return Transaction::fromArray(Request::cancelTransaction($transaction_id));
     }
 
     // -------------------------------------------------------------------------
     // Lookups
     // -------------------------------------------------------------------------
 
-    public function lookupOperatorsByMobileNumber(string $mobile_number): array
+    /**
+     * @return PaginatedResponse
+     */
+    public function lookupOperatorsByMobileNumber(string $mobile_number)
     {
-        return Request::lookupOperatorsByMobileNumber($mobile_number);
+        return PaginatedResponse::fromArray(Request::lookupOperatorsByMobileNumber($mobile_number), Operator::class);
     }
 
-    public function statementInquiry(int $product_id, array $credit_party_identifier): array
+    /**
+     * @return array
+     */
+    public function statementInquiry(int $product_id, array $credit_party_identifier)
     {
         return Request::statementInquiry($product_id, $credit_party_identifier);
     }
 
-    public function creditPartyBenefits(int $product_id, array $credit_party_identifier): array
+    /**
+     * @return array
+     */
+    public function creditPartyBenefits(int $product_id, array $credit_party_identifier)
     {
         return Request::creditPartyBenefits($product_id, $credit_party_identifier);
     }
 
-    public function creditPartyStatus(int $product_id, array $credit_party_identifier): array
+    /**
+     * @return array
+     */
+    public function creditPartyStatus(int $product_id, array $credit_party_identifier)
     {
         return Request::creditPartyStatus($product_id, $credit_party_identifier);
     }
