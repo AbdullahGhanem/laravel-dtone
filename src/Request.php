@@ -6,132 +6,143 @@ use Illuminate\Support\Facades\Http;
 
 class Request
 {
-    static public function request($method, $endpoint, array $params = [])
+    public static function request(string $method, string $endpoint, array $params = []): array
     {
-        $key = config('dtone.is_production') ? config('dtone.key'): config('dtone.test_key');
-        $secret = config('dtone.is_production') ? config('dtone.secret'): config('dtone.test_secret');
-        $domian = config('dtone.is_production') ?  "https://dvs-api.dtone.com/v1/" : "https://preprod-dvs-api.dtone.com/v1/";
-        $response = Http::withBasicAuth($key, $secret)->$method($domian . $endpoint, $params);
+        $key = config('dtone.is_production') ? config('dtone.key') : config('dtone.test_key');
+        $secret = config('dtone.is_production') ? config('dtone.secret') : config('dtone.test_secret');
+        $domain = config('dtone.is_production')
+            ? 'https://dvs-api.dtone.com/v1/'
+            : 'https://preprod-dvs-api.dtone.com/v1/';
 
-        if(isset($params['list_api']) && $params['list_api'] == true){ 
-            return array_merge(['data' => $response->json()], ['meta' => [
-                'total' => $response->header('X-Total'),
-                'total_pages' => $response->header('X-Total-Pages'),
-                'per_page' => $response->header('X-Per-Page'),
-                'X-Page' => $response->header('X-Page'),
-                'next_page' => $response->header('X-Next-Page'),
-                'prev_page' => $response->header('X-Prev-Page'),
-            ]]);
-        }else{
-            return $response->json();
+        $isList = $params['list_api'] ?? false;
+        unset($params['list_api']);
+
+        $response = Http::withBasicAuth($key, $secret)->$method($domain . $endpoint, $params);
+
+        if ($isList) {
+            return [
+                'data' => $response->json(),
+                'meta' => [
+                    'total' => $response->header('X-Total'),
+                    'total_pages' => $response->header('X-Total-Pages'),
+                    'per_page' => $response->header('X-Per-Page'),
+                    'page' => $response->header('X-Page'),
+                    'next_page' => $response->header('X-Next-Page'),
+                    'prev_page' => $response->header('X-Prev-Page'),
+                ],
+            ];
         }
+
+        return $response->json() ?? [];
     }
 
-    static public function services($page, $per_page)
+    public static function services(?int $page = null, ?int $per_page = null): array
     {
         $params = [];
-        isset($page) ? $params['page'] = $page : null;
-        isset($per_page) ? $params['per_page'] = $per_page : null;
+        if ($page !== null) $params['page'] = $page;
+        if ($per_page !== null) $params['per_page'] = $per_page;
         $params['list_api'] = true;
-        return Request::request('get', 'services', $params);
+
+        return self::request('get', 'services', $params);
     }
 
-
-    static public function serviceById($id)
+    public static function serviceById(int $id): array
     {
-        $endpoint = 'services/' . $id ;
-        return Request::request('get', $endpoint);
+        return self::request('get', 'services/' . $id);
     }
 
-    static public function countries($page, $per_page)
+    public static function countries(?int $page = null, ?int $per_page = null): array
     {
         $params = [];
-        isset($page) ? $params['page'] = $page : null;
-        isset($per_page) ? $params['per_page'] = $per_page : null;
+        if ($page !== null) $params['page'] = $page;
+        if ($per_page !== null) $params['per_page'] = $per_page;
         $params['list_api'] = true;
-        return Request::request('get', 'countries', $params);
+
+        return self::request('get', 'countries', $params);
     }
 
-
-    static public function countryByIsoCode($iso_code)
+    public static function countryByIsoCode(string $iso_code): array
     {
-        $endpoint = 'countries/' . $iso_code ;
-        return Request::request('get', $endpoint);
+        return self::request('get', 'countries/' . $iso_code);
     }
 
-    static public function operators($country_iso_code, $page, $per_page)
+    public static function operators(?string $country_iso_code = null, ?int $page = null, ?int $per_page = null): array
     {
         $params = [];
-        isset($page) ? $params['page'] = $page : null;
-        isset($per_page) ? $params['per_page'] = $per_page : null;
-        isset($country_iso_code) ? $params['country_iso_code'] = $country_iso_code : null;
+        if ($page !== null) $params['page'] = $page;
+        if ($per_page !== null) $params['per_page'] = $per_page;
+        if ($country_iso_code !== null) $params['country_iso_code'] = $country_iso_code;
         $params['list_api'] = true;
-        return Request::request('get', 'operators', $params);
+
+        return self::request('get', 'operators', $params);
     }
 
-
-    static public function operatorById($id)
+    public static function operatorById(int $id): array
     {
-        $endpoint = 'operators/' . $id ;
-        return Request::request('get', $endpoint);
+        return self::request('get', 'operators/' . $id);
     }
 
-    static public function balances()
+    public static function balances(): array
     {
-        return Request::request('get', 'balances');
+        return self::request('get', 'balances');
     }
 
+    public static function products(
+        ?string $type = null,
+        ?int $service_id = null,
+        ?string $country_iso_code = null,
+        array $benefit_types = [],
+        ?int $page = null,
+        ?int $per_page = null
+    ): array {
+        $params = [];
+        if (count($benefit_types)) $params['benefit_types'] = $benefit_types;
+        if ($type !== null) $params['type'] = $type;
+        if ($service_id !== null) $params['service_id'] = $service_id;
+        if ($country_iso_code !== null) $params['country_iso_code'] = $country_iso_code;
+        if ($page !== null) $params['page'] = $page;
+        if ($per_page !== null) $params['per_page'] = $per_page;
+        $params['list_api'] = true;
 
-    static public function products($type, $service_id, $country_iso_code, $benefit_types, $page, $per_page)
+        return self::request('get', 'products', $params);
+    }
+
+    public static function transactions(?int $page = null, ?int $per_page = null): array
     {
         $params = [];
-        count($benefit_types) ? $params['benefit_types'] = $benefit_types : null;
-        isset($type) ? $params['type'] = $type : null;
-        isset($service_id) ? $params['service_id'] = $service_id : null;
-        isset($page) ? $params['page'] = $page : null;
-        isset($per_page) ? $params['per_page'] = $per_page : null;
-        isset($country_iso_code) ? $params['country_iso_code'] = $country_iso_code : null;
+        if ($page !== null) $params['page'] = $page;
+        if ($per_page !== null) $params['per_page'] = $per_page;
         $params['list_api'] = true;
-        return Request::request('get', 'products', $params);
+
+        return self::request('get', 'transactions', $params);
     }
 
-    static public function transactions($page, $per_page)
+    public static function createTransaction(string $external_id, int $product_id, array $credit_party_identifier, bool $auto_confirm = false): array
     {
-        $params = [];
-        isset($page) ? $params['page'] = $page : null;
-        isset($per_page) ? $params['per_page'] = $per_page : null;
+        $params = [
+            'external_id' => $external_id,
+            'product_id' => $product_id,
+            'credit_party_identifier' => $credit_party_identifier,
+            'auto_confirm' => $auto_confirm,
+        ];
+
+        return self::request('post', 'async/transactions', $params);
+    }
+
+    public static function confirmTransaction(int $transaction_id): array
+    {
+        return self::request('post', $transaction_id . '/confirm');
+    }
+
+    public static function productById(int $id): array
+    {
+        return self::request('get', 'products/' . $id);
+    }
+
+    public static function lookupOperatorsByMobileNumber(string $mobile_number): array
+    {
         $params['list_api'] = true;
-        return Request::request('get', 'transactions', $params);
-    }
 
-
-    static public function createTransaction($external_id, $product_id, $credit_party_identifier, $auto_confirm = false)
-    {
-        $params = [];
-        $params['auto_confirm'] = $auto_confirm;
-        isset($external_id) ? $params['external_id'] = $external_id : null;
-        isset($product_id) ? $params['product_id'] = $product_id : null;
-        isset($credit_party_identifier) ? $params['credit_party_identifier'] = $credit_party_identifier : null;
-        return Request::request('post', 'async/transactions', $params);
-    }
-
-
-
-    static public function confirmTransaction($transaction_id)
-    {
-        return Request::request('post', $transaction_id.'/confirm');
-    }
-
-    static public function productById($id)
-    {
-        $endpoint = 'products/' . $id ;
-        return Request::request('get', $endpoint);
-    }
-
-    static public function LookUpOperatorsForMobileNumber($mobile_number)
-    {
-        $endpoint = 'lookup/mobile-number/' . $mobile_number ;
-        $params['list_api'] = true;
-        return Request::request('get', $endpoint, $params);
+        return self::request('get', 'lookup/mobile-number/' . $mobile_number, $params);
     }
 }

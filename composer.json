@@ -1,12 +1,17 @@
 {
     "name": "ghanem/dtone",
-    "description": "A package that provides an interface between Laravel and dtone API",
-    "keywords": ["Laravel", "PHP", "dtone", "API", "DT One"],
+    "description": "A package that provides an interface between Laravel and DT One DVS API",
+    "keywords": ["Laravel", "PHP", "dtone", "API", "DT One", "DVS"],
     "type": "laravel-package",
     "license": "MIT",
     "autoload": {
         "psr-4": {
             "Ghanem\\Dtone\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Ghanem\\Dtone\\Tests\\": "tests/"
         }
     },
     "authors": [
@@ -16,8 +21,14 @@
         }
     ],
     "require": {
-        "guzzlehttp/guzzle": "^7.3",
-        "illuminate/http": "^8.55|^9.32"
+        "php": "^7.2.5|^8.0",
+        "guzzlehttp/guzzle": "^6.3|^7.0",
+        "illuminate/http": "^7.0|^8.0|^9.0|^10.0|^11.0|^12.0",
+        "illuminate/support": "^7.0|^8.0|^9.0|^10.0|^11.0|^12.0"
+    },
+    "require-dev": {
+        "orchestra/testbench": "^5.0|^6.0|^7.0|^8.0|^9.0|^10.0",
+        "phpunit/phpunit": "^8.4|^9.0|^10.0|^11.0"
     },
     "extra": {
         "laravel": {
@@ -28,7 +39,7 @@
                 "Dtone": "Ghanem\\Dtone\\Facades\\Dtone"
             }
         }
-    }, 
+    },
     "minimum-stability": "dev",
     "prefer-stable": true,
     "scripts": {
