@@ -17,7 +17,16 @@ class Request
         $isList = $params['list_api'] ?? false;
         unset($params['list_api']);
 
-        $response = Http::withBasicAuth($key, $secret)->$method($domain . $endpoint, $params);
+        $retries = (int) config('dtone.retries', 0);
+        $retryDelay = (int) config('dtone.retry_delay', 100);
+
+        $http = Http::withBasicAuth($key, $secret);
+
+        if ($retries > 0) {
+            $http = $http->retry($retries, $retryDelay);
+        }
+
+        $response = $http->$method($domain . $endpoint, $params);
 
         if ($isList) {
             return [
@@ -36,6 +45,10 @@ class Request
         return $response->json() ?? [];
     }
 
+    // -------------------------------------------------------------------------
+    // Services
+    // -------------------------------------------------------------------------
+
     public static function services(?int $page = null, ?int $per_page = null): array
     {
         $params = [];
@@ -51,6 +64,10 @@ class Request
         return self::request('get', 'services/' . $id);
     }
 
+    // -------------------------------------------------------------------------
+    // Countries
+    // -------------------------------------------------------------------------
+
     public static function countries(?int $page = null, ?int $per_page = null): array
     {
         $params = [];
@@ -65,6 +82,10 @@ class Request
     {
         return self::request('get', 'countries/' . $iso_code);
     }
+
+    // -------------------------------------------------------------------------
+    // Operators
+    // -------------------------------------------------------------------------
 
     public static function operators(?string $country_iso_code = null, ?int $page = null, ?int $per_page = null): array
     {
@@ -82,10 +103,18 @@ class Request
         return self::request('get', 'operators/' . $id);
     }
 
+    // -------------------------------------------------------------------------
+    // Balances
+    // -------------------------------------------------------------------------
+
     public static function balances(): array
     {
         return self::request('get', 'balances');
     }
+
+    // -------------------------------------------------------------------------
+    // Products
+    // -------------------------------------------------------------------------
 
     public static function products(
         ?string $type = null,
@@ -107,6 +136,67 @@ class Request
         return self::request('get', 'products', $params);
     }
 
+    public static function productById(int $id): array
+    {
+        return self::request('get', 'products/' . $id);
+    }
+
+    // -------------------------------------------------------------------------
+    // Campaigns
+    // -------------------------------------------------------------------------
+
+    public static function campaigns(?int $page = null, ?int $per_page = null): array
+    {
+        $params = [];
+        if ($page !== null) $params['page'] = $page;
+        if ($per_page !== null) $params['per_page'] = $per_page;
+        $params['list_api'] = true;
+
+        return self::request('get', 'campaigns', $params);
+    }
+
+    public static function campaignById(int $id): array
+    {
+        return self::request('get', 'campaigns/' . $id);
+    }
+
+    // -------------------------------------------------------------------------
+    // Promotions
+    // -------------------------------------------------------------------------
+
+    public static function promotions(?int $page = null, ?int $per_page = null): array
+    {
+        $params = [];
+        if ($page !== null) $params['page'] = $page;
+        if ($per_page !== null) $params['per_page'] = $per_page;
+        $params['list_api'] = true;
+
+        return self::request('get', 'promotions', $params);
+    }
+
+    public static function promotionById(int $id): array
+    {
+        return self::request('get', 'promotions/' . $id);
+    }
+
+    // -------------------------------------------------------------------------
+    // Benefit Types
+    // -------------------------------------------------------------------------
+
+    public static function benefitTypes(?int $page = null, ?int $per_page = null): array
+    {
+        $params = [];
+        if ($page !== null) $params['page'] = $page;
+        if ($per_page !== null) $params['per_page'] = $per_page;
+        $params['list_api'] = true;
+
+        return self::request('get', 'benefit-types', $params);
+    }
+
+    // -------------------------------------------------------------------------
+    // Transactions
+    // -------------------------------------------------------------------------
+
     public static function transactions(?int $page = null, ?int $per_page = null): array
     {
         $params = [];
@@ -115,6 +205,11 @@ class Request
         $params['list_api'] = true;
 
         return self::request('get', 'transactions', $params);
+    }
+
+    public static function transactionById(int $id): array
+    {
+        return self::request('get', 'transactions/' . $id);
     }
 
     public static function createTransaction(string $external_id, int $product_id, array $credit_party_identifier, bool $auto_confirm = false): array
@@ -129,20 +224,71 @@ class Request
         return self::request('post', 'async/transactions', $params);
     }
 
-    public static function confirmTransaction(int $transaction_id): array
+    public static function createTransactionSync(string $external_id, int $product_id, array $credit_party_identifier, bool $auto_confirm = false): array
     {
-        return self::request('post', $transaction_id . '/confirm');
+        $params = [
+            'external_id' => $external_id,
+            'product_id' => $product_id,
+            'credit_party_identifier' => $credit_party_identifier,
+            'auto_confirm' => $auto_confirm,
+        ];
+
+        return self::request('post', 'sync/transactions', $params);
     }
 
-    public static function productById(int $id): array
+    public static function confirmTransaction(int $transaction_id): array
     {
-        return self::request('get', 'products/' . $id);
+        return self::request('post', 'async/transactions/' . $transaction_id . '/confirm');
     }
+
+    public static function confirmTransactionSync(int $transaction_id): array
+    {
+        return self::request('post', 'sync/transactions/' . $transaction_id . '/confirm');
+    }
+
+    public static function cancelTransaction(int $transaction_id): array
+    {
+        return self::request('post', 'async/transactions/' . $transaction_id . '/cancel');
+    }
+
+    // -------------------------------------------------------------------------
+    // Lookups
+    // -------------------------------------------------------------------------
 
     public static function lookupOperatorsByMobileNumber(string $mobile_number): array
     {
         $params['list_api'] = true;
 
         return self::request('get', 'lookup/mobile-number/' . $mobile_number, $params);
+    }
+
+    public static function statementInquiry(int $product_id, array $credit_party_identifier): array
+    {
+        $params = [
+            'product_id' => $product_id,
+            'credit_party_identifier' => $credit_party_identifier,
+        ];
+
+        return self::request('post', 'lookup/statement-inquiry', $params);
+    }
+
+    public static function creditPartyBenefits(int $product_id, array $credit_party_identifier): array
+    {
+        $params = [
+            'product_id' => $product_id,
+            'credit_party_identifier' => $credit_party_identifier,
+        ];
+
+        return self::request('post', 'lookup/credit-party/benefits', $params);
+    }
+
+    public static function creditPartyStatus(int $product_id, array $credit_party_identifier): array
+    {
+        $params = [
+            'product_id' => $product_id,
+            'credit_party_identifier' => $credit_party_identifier,
+        ];
+
+        return self::request('post', 'lookup/credit-party/status', $params);
     }
 }

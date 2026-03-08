@@ -36,9 +36,22 @@ DTONE_SECRET=your-production-api-secret
 DTONE_TEST_KEY=your-sandbox-api-key
 DTONE_TEST_SECRET=your-sandbox-api-secret
 DTONE_IS_PRODUCTION=false
+DTONE_RETRIES=0
+DTONE_RETRY_DELAY=100
 ```
 
 Set `DTONE_IS_PRODUCTION=true` when you are ready to use the production API.
+
+### Retry Configuration
+
+You can enable automatic retries for failed requests:
+
+```env
+DTONE_RETRIES=3
+DTONE_RETRY_DELAY=100
+```
+
+This will retry failed requests up to 3 times with a 100ms delay between attempts.
 
 ## Usage
 
@@ -98,6 +111,33 @@ $products = Dtone::products(
 $product = Dtone::productById(99);
 ```
 
+### Campaigns
+
+```php
+// List active campaigns
+$campaigns = Dtone::campaigns($page, $per_page);
+
+// Get a campaign by ID
+$campaign = Dtone::campaignById(7);
+```
+
+### Promotions
+
+```php
+// List promotions
+$promotions = Dtone::promotions($page, $per_page);
+
+// Get a promotion by ID
+$promotion = Dtone::promotionById(3);
+```
+
+### Benefit Types
+
+```php
+// List all benefit types
+$benefitTypes = Dtone::benefitTypes($page, $per_page);
+```
+
 ### Balances
 
 ```php
@@ -110,7 +150,10 @@ $balances = Dtone::balances();
 // List transactions
 $transactions = Dtone::transactions($page, $per_page);
 
-// Create a transaction
+// Get a transaction by ID
+$transaction = Dtone::transactionById(456);
+
+// Create a transaction (async)
 $transaction = Dtone::createTransaction(
     'external-id-123',                      // external_id
     99,                                     // product_id
@@ -118,8 +161,47 @@ $transaction = Dtone::createTransaction(
     false                                   // auto_confirm (default: false)
 );
 
-// Confirm a transaction
+// Create a transaction (sync - waits for completion)
+$transaction = Dtone::createTransactionSync(
+    'external-id-123',
+    99,
+    ['mobile_number' => '+1234567890'],
+    true                                    // auto_confirm
+);
+
+// Confirm a transaction (async)
 $confirmed = Dtone::confirmTransaction($transaction_id);
+
+// Confirm a transaction (sync - waits for completion)
+$confirmed = Dtone::confirmTransactionSync($transaction_id);
+
+// Cancel a transaction
+$cancelled = Dtone::cancelTransaction($transaction_id);
+```
+
+### Lookups
+
+```php
+// Lookup operators by mobile number
+$operators = Dtone::lookupOperatorsByMobileNumber('+1234567890');
+
+// Statement inquiry
+$statement = Dtone::statementInquiry(
+    99,                                     // product_id
+    ['account_number' => '123456']          // credit_party_identifier
+);
+
+// Get remaining benefits for a credit party
+$benefits = Dtone::creditPartyBenefits(
+    99,                                     // product_id
+    ['mobile_number' => '+1234567890']      // credit_party_identifier
+);
+
+// Get status for a credit party
+$status = Dtone::creditPartyStatus(
+    99,                                     // product_id
+    ['mobile_number' => '+1234567890']      // credit_party_identifier
+);
 ```
 
 ### Paginated Responses
@@ -150,29 +232,24 @@ The `meta` array contains:
 - [x] Countries (list, get by ISO code)
 - [x] Operators (list, get by ID)
 - [x] Products (list with filters, get by ID)
+- [x] Campaigns (list, get by ID)
+- [x] Promotions (list, get by ID)
+- [x] Benefit types (list)
 - [x] Balances
-- [x] Transactions (list, create async, confirm)
+- [x] Transactions (list, get by ID, create async/sync, confirm async/sync, cancel)
 - [x] Lookup operators by mobile number
+- [x] Statement inquiry lookup
+- [x] Credit party lookup (remaining benefits, status)
 - [x] Pagination support with meta data
 - [x] Production / Sandbox environment switching
-- [x] Test suite (29 tests)
+- [x] Retry mechanism for failed requests
+- [x] Test suite
 - [x] Support for Laravel 7 - 12
 
 ## Roadmap
 
-- [ ] Campaigns (list, get by ID)
-- [ ] Promotions (list, get by ID)
-- [ ] Benefits types (list)
-- [ ] Create transaction synchronously
-- [ ] Confirm transaction synchronously
-- [ ] Cancel transaction
-- [ ] Get transaction by ID
-- [ ] Statement inquiry lookup
-- [ ] Credit party lookup (remaining benefits, status)
-- [ ] Webhook / Callback support
-- [ ] Rate limiting handling
-- [ ] Retry mechanism for failed requests
 - [ ] Response DTOs (typed objects instead of arrays)
+- [ ] Webhook / Callback support
 - [ ] Laravel notifications channel integration
 
 ## Testing

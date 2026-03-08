@@ -26,4 +26,16 @@ return [
     |
     */
     'is_production' => env('DTONE_IS_PRODUCTION', false),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Retry Configuration
+    |--------------------------------------------------------------------------
+    |
+    | Number of times to retry a failed request and the delay (in ms) between
+    | retries. Set retries to 0 to disable.
+    |
+    */
+    'retries' => env('DTONE_RETRIES', 0),
+    'retry_delay' => env('DTONE_RETRY_DELAY', 100),
 ];

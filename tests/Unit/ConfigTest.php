@@ -27,4 +27,10 @@ class ConfigTest extends TestCase
         $this->assertEquals('test-sandbox-key', config('dtone.test_key'));
         $this->assertEquals('test-sandbox-secret', config('dtone.test_secret'));
     }
+
+    public function test_retry_config_defaults(): void
+    {
+        $this->assertEquals(0, config('dtone.retries'));
+        $this->assertEquals(100, config('dtone.retry_delay'));
+    }
 }
