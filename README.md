@@ -1,8 +1,8 @@
 # Laravel Dtone
 
-[![Latest Stable Version](https://poser.pugx.org/ghanem/dtone/v/stable)](https://packagist.org/packages/ghanem/dtone) [![Total Downloads](https://poser.pugx.org/ghanem/dtone/downloads)](https://packagist.org/packages/ghanem/dtone) [![Latest Unstable Version](https://poser.pugx.org/ghanem/dtone/v/unstable)](https://packagist.org/packages/ghanem/dtone) [![License](https://poser.pugx.org/ghanem/dtone/license)](https://packagist.org/packages/ghanem/dtone)
+[![Latest Stable Version](https://poser.pugx.org/ghanem/dtone/v/stable.svg)](https://packagist.org/packages/ghanem/dtone) [![License](https://poser.pugx.org/ghanem/dtone/license.svg)](https://packagist.org/packages/ghanem/dtone) [![Total Downloads](https://poser.pugx.org/ghanem/dtone/downloads.svg)](https://packagist.org/packages/ghanem/dtone)
 
-A package that provides an interface between [Laravel](https://laravel.com/docs/8.x) and [Dtone API](https://dvs-api-doc.dtone.com/#section/Overview), includes Gifs.
+A package that provides an interface between [Laravel](https://laravel.com) and [DT One DVS API](https://dvs-api-doc.dtone.com/#section/Overview).
 
 ## Installation
 - [Dtone on Packagist](https://packagist.org/packages/ghanem/dtone)
