@@ -377,6 +377,54 @@ Notification::route(DtoneChannel::class, null)
     ->notify(new SendAirtimeNotification());
 ```
 
+## Caching
+
+Discovery endpoints (services, countries, operators, products, campaigns, promotions, benefit-types) can be cached to reduce API calls:
+
+```env
+DTONE_CACHE_TTL=3600
+```
+
+Override TTL per endpoint:
+
+```env
+DTONE_CACHE_TTL_SERVICES=7200
+DTONE_CACHE_TTL_COUNTRIES=86400
+DTONE_CACHE_TTL_OPERATORS=3600
+DTONE_CACHE_TTL_PRODUCTS=1800
+```
+
+Set `DTONE_CACHE_TTL=0` (default) to disable caching. Transactions, balances, and lookups are never cached.
+
+Clear cache programmatically:
+
+```php
+use Ghanem\Dtone\Request;
+
+Request::clearCache();              // clear all DT One cache
+Request::clearCache('services');    // clear specific endpoint cache
+```
+
+## Artisan Commands
+
+| Command | Description |
+|---------|-------------|
+| `dtone:balance` | Display account balances |
+| `dtone:products` | List products (supports `--country`, `--type`, `--service`, `--page`, `--per-page`) |
+| `dtone:transaction {id?}` | List transactions or get details by ID |
+| `dtone:cache-clear {endpoint?}` | Clear DT One cache (all or specific endpoint) |
+| `dtone:health` | Check API connectivity, balances, and service availability |
+
+Examples:
+
+```bash
+php artisan dtone:balance
+php artisan dtone:products --country=US --type=FIXED_VALUE_RECHARGE
+php artisan dtone:transaction 456
+php artisan dtone:cache-clear services
+php artisan dtone:health
+```
+
 ## Done
 
 - [x] Services (list, get by ID)
@@ -398,17 +446,19 @@ Notification::route(DtoneChannel::class, null)
 - [x] Webhook / Callback support with event dispatching
 - [x] Signature verification middleware
 - [x] Laravel notifications channel integration
-- [x] Test suite (93 tests, 210 assertions)
+- [x] Caching layer for discovery endpoints
+- [x] Configurable cache TTL per endpoint
+- [x] Rate limiting awareness (respects `X-RateLimit` headers)
+- [x] Artisan commands (`dtone:balance`, `dtone:products`, `dtone:transaction`, `dtone:cache-clear`, `dtone:health`)
+- [x] Health check command
+- [x] Test suite (110 tests, 248 assertions)
 - [x] Support for Laravel 7 - 12
 
 ## Roadmap
 
-- [ ] Caching layer for discovery endpoints (services, countries, operators, products)
-- [ ] Configurable cache TTL per endpoint
-- [ ] Rate limiting awareness (respect `X-RateLimit` headers, auto-throttle)
 - [ ] Batch transactions support
-- [ ] Artisan commands (`dtone:balance`, `dtone:products`, `dtone:transaction`)
-- [ ] Health check endpoint integration
+- [ ] Auto-paginate helper (fetch all pages automatically)
+- [ ] Webhook queue integration (dispatch events to queue)
 
 ## Testing
 

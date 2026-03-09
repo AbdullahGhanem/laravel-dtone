@@ -52,4 +52,19 @@ return [
     'webhook_secret' => env('DTONE_WEBHOOK_SECRET', ''),
     'webhook_middleware' => [],
     'webhook_logging' => env('DTONE_WEBHOOK_LOGGING', false),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Cache Configuration
+    |--------------------------------------------------------------------------
+    |
+    | Cache TTL in seconds for discovery endpoints. Set to 0 to disable.
+    | You can override the TTL per endpoint type.
+    |
+    */
+    'cache_ttl' => env('DTONE_CACHE_TTL', 0),
+    'cache_ttl_services' => env('DTONE_CACHE_TTL_SERVICES', null),
+    'cache_ttl_countries' => env('DTONE_CACHE_TTL_COUNTRIES', null),
+    'cache_ttl_operators' => env('DTONE_CACHE_TTL_OPERATORS', null),
+    'cache_ttl_products' => env('DTONE_CACHE_TTL_PRODUCTS', null),
 ];

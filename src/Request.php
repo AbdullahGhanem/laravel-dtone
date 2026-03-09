@@ -2,6 +2,7 @@
 
 namespace Ghanem\Dtone;
 
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 
 class Request
@@ -28,6 +29,18 @@ class Request
 
         $response = $http->$method($domain . $endpoint, $params);
 
+        // Rate limiting awareness
+        $remaining = $response->header('X-RateLimit-Remaining');
+        if ($remaining !== null && (int) $remaining === 0) {
+            $resetAt = $response->header('X-RateLimit-Reset');
+            if ($resetAt) {
+                $waitMs = max(0, ((int) $resetAt - time()) * 1000);
+                if ($waitMs > 0 && $waitMs <= 60000) {
+                    usleep($waitMs * 1000);
+                }
+            }
+        }
+
         if ($isList) {
             return [
                 'data' => $response->json(),
@@ -45,6 +58,59 @@ class Request
         return $response->json() ?? [];
     }
 
+    /**
+     * Make a cached GET request for discovery endpoints.
+     *
+     * @param string   $cacheKey
+     * @param string   $endpoint
+     * @param array    $params
+     * @param int|null $ttl Cache TTL in seconds (null = use config default)
+     * @return array
+     */
+    public static function cachedRequest(string $cacheKey, string $endpoint, array $params = [], ?int $ttl = null): array
+    {
+        $cacheTtl = $ttl ?? (int) config('dtone.cache_ttl', 0);
+
+        if ($cacheTtl <= 0) {
+            return self::request('get', $endpoint, $params);
+        }
+
+        $cacheParams = $params;
+        unset($cacheParams['list_api']);
+        $fullKey = 'dtone:' . $cacheKey . ':' . md5(serialize($cacheParams));
+
+        return Cache::remember($fullKey, $cacheTtl, function () use ($endpoint, $params) {
+            return self::request('get', $endpoint, $params);
+        });
+    }
+
+    /**
+     * Clear all DT One cache or a specific endpoint cache.
+     *
+     * @param string|null $endpoint
+     * @return void
+     */
+    public static function clearCache(?string $endpoint = null)
+    {
+        if ($endpoint) {
+            // Clear specific endpoint pattern - works with tagged cache or prefix
+            Cache::forget('dtone:' . $endpoint);
+        }
+
+        // For stores that support tags
+        try {
+            Cache::getStore();
+            // Flush keys matching dtone: prefix by forgetting known endpoints
+            $endpoints = ['services', 'countries', 'operators', 'products', 'campaigns', 'promotions', 'benefit-types', 'balances'];
+            foreach ($endpoints as $ep) {
+                // We can't enumerate all possible param combinations, but we clear the base
+                Cache::forget('dtone:' . $ep . ':' . md5(serialize([])));
+            }
+        } catch (\Exception $e) {
+            // Silently fail if cache store doesn't support the operation
+        }
+    }
+
     // -------------------------------------------------------------------------
     // Services
     // -------------------------------------------------------------------------
@@ -56,12 +122,16 @@ class Request
         if ($per_page !== null) $params['per_page'] = $per_page;
         $params['list_api'] = true;
 
-        return self::request('get', 'services', $params);
+        $ttl = (int) (config('dtone.cache_ttl_services') ?? config('dtone.cache_ttl', 0));
+
+        return self::cachedRequest('services', 'services', $params, $ttl);
     }
 
     public static function serviceById(int $id): array
     {
-        return self::request('get', 'services/' . $id);
+        $ttl = (int) (config('dtone.cache_ttl_services') ?? config('dtone.cache_ttl', 0));
+
+        return self::cachedRequest('services:' . $id, 'services/' . $id, [], $ttl);
     }
 
     // -------------------------------------------------------------------------
@@ -75,12 +145,16 @@ class Request
         if ($per_page !== null) $params['per_page'] = $per_page;
         $params['list_api'] = true;
 
-        return self::request('get', 'countries', $params);
+        $ttl = (int) (config('dtone.cache_ttl_countries') ?? config('dtone.cache_ttl', 0));
+
+        return self::cachedRequest('countries', 'countries', $params, $ttl);
     }
 
     public static function countryByIsoCode(string $iso_code): array
     {
-        return self::request('get', 'countries/' . $iso_code);
+        $ttl = (int) (config('dtone.cache_ttl_countries') ?? config('dtone.cache_ttl', 0));
+
+        return self::cachedRequest('countries:' . $iso_code, 'countries/' . $iso_code, [], $ttl);
     }
 
     // -------------------------------------------------------------------------
@@ -95,12 +169,16 @@ class Request
         if ($country_iso_code !== null) $params['country_iso_code'] = $country_iso_code;
         $params['list_api'] = true;
 
-        return self::request('get', 'operators', $params);
+        $ttl = (int) (config('dtone.cache_ttl_operators') ?? config('dtone.cache_ttl', 0));
+
+        return self::cachedRequest('operators', 'operators', $params, $ttl);
     }
 
     public static function operatorById(int $id): array
     {
-        return self::request('get', 'operators/' . $id);
+        $ttl = (int) (config('dtone.cache_ttl_operators') ?? config('dtone.cache_ttl', 0));
+
+        return self::cachedRequest('operators:' . $id, 'operators/' . $id, [], $ttl);
     }
 
     // -------------------------------------------------------------------------
@@ -133,12 +211,16 @@ class Request
         if ($per_page !== null) $params['per_page'] = $per_page;
         $params['list_api'] = true;
 
-        return self::request('get', 'products', $params);
+        $ttl = (int) (config('dtone.cache_ttl_products') ?? config('dtone.cache_ttl', 0));
+
+        return self::cachedRequest('products', 'products', $params, $ttl);
     }
 
     public static function productById(int $id): array
     {
-        return self::request('get', 'products/' . $id);
+        $ttl = (int) (config('dtone.cache_ttl_products') ?? config('dtone.cache_ttl', 0));
+
+        return self::cachedRequest('products:' . $id, 'products/' . $id, [], $ttl);
     }
 
     // -------------------------------------------------------------------------
@@ -152,12 +234,12 @@ class Request
         if ($per_page !== null) $params['per_page'] = $per_page;
         $params['list_api'] = true;
 
-        return self::request('get', 'campaigns', $params);
+        return self::cachedRequest('campaigns', 'campaigns', $params);
     }
 
     public static function campaignById(int $id): array
     {
-        return self::request('get', 'campaigns/' . $id);
+        return self::cachedRequest('campaigns:' . $id, 'campaigns/' . $id);
     }
 
     // -------------------------------------------------------------------------
@@ -171,12 +253,12 @@ class Request
         if ($per_page !== null) $params['per_page'] = $per_page;
         $params['list_api'] = true;
 
-        return self::request('get', 'promotions', $params);
+        return self::cachedRequest('promotions', 'promotions', $params);
     }
 
     public static function promotionById(int $id): array
     {
-        return self::request('get', 'promotions/' . $id);
+        return self::cachedRequest('promotions:' . $id, 'promotions/' . $id);
     }
 
     // -------------------------------------------------------------------------
@@ -190,7 +272,7 @@ class Request
         if ($per_page !== null) $params['per_page'] = $per_page;
         $params['list_api'] = true;
 
-        return self::request('get', 'benefit-types', $params);
+        return self::cachedRequest('benefit-types', 'benefit-types', $params);
     }
 
     // -------------------------------------------------------------------------

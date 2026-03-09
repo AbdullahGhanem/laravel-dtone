@@ -2,6 +2,11 @@
 
 namespace Ghanem\Dtone;
 
+use Ghanem\Dtone\Console\DtoneBalanceCommand;
+use Ghanem\Dtone\Console\DtoneCacheClearCommand;
+use Ghanem\Dtone\Console\DtoneHealthCommand;
+use Ghanem\Dtone\Console\DtoneProductsCommand;
+use Ghanem\Dtone\Console\DtoneTransactionCommand;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
 
@@ -33,6 +38,7 @@ class DtoneServiceProvider extends ServiceProvider
         ], 'config');
 
         $this->registerWebhookRoute();
+        $this->registerCommands();
     }
 
     /**
@@ -49,6 +55,24 @@ class DtoneServiceProvider extends ServiceProvider
             Route::post($path, [Http\Controllers\WebhookController::class, 'handle'])
                 ->middleware($middleware)
                 ->name('dtone.webhook');
+        }
+    }
+
+    /**
+     * Register artisan commands.
+     *
+     * @return void
+     */
+    protected function registerCommands()
+    {
+        if ($this->app->runningInConsole()) {
+            $this->commands([
+                DtoneBalanceCommand::class,
+                DtoneProductsCommand::class,
+                DtoneTransactionCommand::class,
+                DtoneCacheClearCommand::class,
+                DtoneHealthCommand::class,
+            ]);
         }
     }
 }
