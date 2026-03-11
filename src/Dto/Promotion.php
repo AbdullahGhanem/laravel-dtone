@@ -2,8 +2,10 @@
 
 namespace Ghanem\Dtone\Dto;
 
-class Promotion
+class Promotion implements \ArrayAccess, \JsonSerializable
 {
+    use Concerns\ArrayAccessible;
+
     /** @var int */
     private $id;
     /** @var string|null */

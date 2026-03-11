@@ -2,8 +2,10 @@
 
 namespace Ghanem\Dtone\Dto;
 
-class Balance
+class Balance implements \ArrayAccess, \JsonSerializable
 {
+    use Concerns\ArrayAccessible;
+
     /** @var float */
     private $amount;
     /** @var string */

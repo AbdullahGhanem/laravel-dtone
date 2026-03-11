@@ -2,8 +2,10 @@
 
 namespace Ghanem\Dtone\Dto;
 
-class Country
+class Country implements \ArrayAccess, \JsonSerializable
 {
+    use Concerns\ArrayAccessible;
+
     /** @var string */
     private $isoCode;
     /** @var string */

@@ -2,8 +2,10 @@
 
 namespace Ghanem\Dtone\Dto;
 
-class Meta
+class Meta implements \ArrayAccess, \JsonSerializable
 {
+    use Concerns\ArrayAccessible;
+
     /** @var int|null */
     private $total;
     /** @var int|null */

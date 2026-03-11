@@ -2,8 +2,10 @@
 
 namespace Ghanem\Dtone\Dto;
 
-class PaginatedResponse
+class PaginatedResponse implements \ArrayAccess, \JsonSerializable
 {
+    use Concerns\ArrayAccessible;
+
     /** @var array */
     private $data;
     /** @var Meta */

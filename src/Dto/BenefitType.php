@@ -2,8 +2,10 @@
 
 namespace Ghanem\Dtone\Dto;
 
-class BenefitType
+class BenefitType implements \ArrayAccess, \JsonSerializable
 {
+    use Concerns\ArrayAccessible;
+
     /** @var string */
     private $name;
     /** @var array */
